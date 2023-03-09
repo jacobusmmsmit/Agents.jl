@@ -42,13 +42,13 @@ to select differing neighbors depending on the underlying graph directionality t
 - `:in` returns incoming vertex neighbors.
 - `:out` returns outgoing vertex neighbors.
 """
-function GraphSpace(graph::G) where {G <: AbstractGraph}
+function GraphSpace(graph::G) where {G<:AbstractGraph}
     agent_positions = [Int[] for _ in 1:nv(graph)]
     return GraphSpace{G}(graph, agent_positions)
 end
 
 function Base.show(io::IO, s::GraphSpace)
-    print(io, "GraphSpace with $(nv(s.graph)) positions and $(ne(s.graph)) edges")
+    return print(io, "GraphSpace with $(nv(s.graph)) positions and $(ne(s.graph)) edges")
 end
 
 """
@@ -68,7 +68,7 @@ random_position(model::ABM{<:GraphSpace}) = rand(model.rng, 1:nv(model))
 function remove_agent_from_space!(
     agent::A,
     model::ABM{<:GraphSpace,A},
-) where {A <: AbstractAgent}
+) where {A<:AbstractAgent}
     agentpos = agent.pos
     ids = ids_in_position(agentpos, model)
     deleteat!(ids, findfirst(a -> a == agent.id, ids))
@@ -78,7 +78,7 @@ end
 function add_agent_to_space!(
     agent::A,
     model::ABM{<:GraphSpace,A},
-) where {A <: AbstractAgent}
+) where {A<:AbstractAgent}
     push!(ids_in_position(agent.pos, model), agent.id)
     return agent
 end
@@ -92,24 +92,24 @@ ids_in_position(n::Integer, model::ABM{<:GraphSpace}) = model.space.stored_ids[n
 #######################################################################################
 # Neighbors
 #######################################################################################
-function nearby_ids(pos::Int, model::ABM{<:GraphSpace}, r = 1; kwargs...)
+function nearby_ids(pos::Int, model::ABM{<:GraphSpace}, r=1; kwargs...)
     if r == 0
         return ids_in_position(pos, model)
     end
     np = nearby_positions(pos, model, r; kwargs...)
-    vcat(model.space.stored_ids[pos], model.space.stored_ids[np]...)
+    return vcat(model.space.stored_ids[pos], model.space.stored_ids[np]...)
 end
 
 # This function is here purely because of performance reasons
-function nearby_ids(agent::A, model::ABM{<:GraphSpace,A}, r = 1; kwargs...) where {A <: AbstractAgent}
+function nearby_ids(agent::A, model::ABM{<:GraphSpace,A}, r=1; kwargs...) where {A<:AbstractAgent}
     all = nearby_ids(agent.pos, model, r; kwargs...)
-    filter!(i -> i ≠ agent.id, all)
+    return filter!(i -> i ≠ agent.id, all)
 end
 
 function nearby_positions(
     position::Int,
     model::ABM{<:GraphSpace};
-    neighbor_type::Symbol = :default,
+    neighbor_type::Symbol=:default,
 )
     @assert neighbor_type ∈ (:default, :all, :in, :out)
     if neighbor_type == :default
@@ -136,16 +136,16 @@ that of the one to be removed, while every other node remains as is. This means 
  when doing `rem_node!(n, model)` the last node becomes the `n`-th node while the previous
  `n`-th node (and all its edges and agents) are deleted.
  """
- function rem_node!(model::ABM{<:GraphSpace}, n::Int)
-     for id in copy(ids_in_position(n, model))
-         kill_agent!(model[id], model)
-     end
+function rem_node!(model::ABM{<:GraphSpace}, n::Int)
+    for id in copy(ids_in_position(n, model))
+        kill_agent!(model[id], model)
+    end
     V = nv(model)
     success = Graphs.rem_vertex!(model.space.graph, n)
     n > V && error("Node number exceeds amount of nodes in graph!")
     s = model.space.stored_ids
     s[V], s[n] = s[n], s[V]
-    pop!(s)
+    return pop!(s)
 end
 
 """
@@ -153,11 +153,11 @@ end
  Add a new node (i.e. possible position) to the model's graph and return it.
  You can connect this new node with existing ones using [`add_edge!`](@ref).
  """
- function add_node!(model::ABM{<:GraphSpace})
-     add_vertex!(model.space.graph)
-     push!(model.space.stored_ids, Int[])
-     return nv(model)
- end
+function add_node!(model::ABM{<:GraphSpace})
+    add_vertex!(model.space.graph)
+    push!(model.space.stored_ids, Int[])
+    return nv(model)
+end
 
 """
     rem_vertex!(model::ABM{<:GraphSpace}, n::Int)
@@ -177,7 +177,7 @@ function Graphs.rem_vertex!(model::ABM{<:GraphSpace}, n::Int)
     n > V && error("Node number exceeds amount of nodes in graph!")
     s = model.space.stored_ids
     s[V], s[n] = s[n], s[V]
-    pop!(s)
+    return pop!(s)
 end
 
 """

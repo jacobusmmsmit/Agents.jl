@@ -12,7 +12,7 @@ function Agents.plan_route!(
 ) where {D,A<:AbstractAgent}
     path = find_path(pathfinder, agent.pos, dest)
     isnothing(path) && return
-    pathfinder.agent_paths[agent.id] = path
+    return pathfinder.agent_paths[agent.id] = path
 end
 
 """
@@ -30,7 +30,7 @@ function Agents.plan_best_route!(
     agent::A,
     dests,
     pathfinder::AStar{D,P,M,Int64};
-    condition::Symbol = :shortest,
+    condition::Symbol=:shortest,
 ) where {A<:AbstractAgent,D,P,M}
     @assert condition ∈ (:shortest, :longest)
     compare = condition == :shortest ? (a, b) -> a < b : (a, b) -> a > b
@@ -61,12 +61,12 @@ If the agent does not have a precalculated path or the path is empty, it remains
 function Agents.move_along_route!(
     agent::A,
     model::ABM{<:GridSpace{D},A},
-    pathfinder::AStar{D}
+    pathfinder::AStar{D},
 ) where {D,A<:AbstractAgent}
     isempty(agent.id, pathfinder) && return
 
     move_agent!(agent, first(pathfinder.agent_paths[agent.id]), model)
-    popfirst!(pathfinder.agent_paths[agent.id])
+    return popfirst!(pathfinder.agent_paths[agent.id])
 end
 
 """
@@ -74,9 +74,8 @@ end
 Return an iterator over all [`nearby_positions`](@ref) within "radius" `r` of the given
 `position` (excluding `position`), which are walkable as specified by the given `pathfinder`.
 """
-nearby_walkable(position, model::ABM{<:GridSpace{D}}, pathfinder::AStar{D}, r = 1) where {D} =
+nearby_walkable(position, model::ABM{<:GridSpace{D}}, pathfinder::AStar{D}, r=1) where {D} =
     Iterators.filter(x -> pathfinder.walkmap[x...] == 1, nearby_positions(position, model, r))
-
 
 """
     Pathfinding.random_walkable(model, pathfinder::AStar{D})
@@ -85,6 +84,6 @@ Return a random position in the given `model` that is walkable as specified by t
 """
 function random_walkable(model::ABM{<:GridSpace{D}}, pathfinder::AStar{D}) where {D}
     return Tuple(rand(model.rng,
-        filter(x -> pathfinder.walkmap[x], CartesianIndices(model.space.stored_ids))
+        filter(x -> pathfinder.walkmap[x], CartesianIndices(model.space.stored_ids)),
     ))
 end

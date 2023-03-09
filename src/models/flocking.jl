@@ -26,18 +26,18 @@ flocking(;
 Same as in [Flocking model](@ref).
 """
 function flocking(;
-    n_birds = 100,
-    speed = 1.0,
-    cohere_factor = 0.25,
-    separation = 4.0,
-    separate_factor = 0.25,
-    match_factor = 0.01,
-    visual_distance = 5.0,
-    extent = (100, 100),
-    spacing = visual_distance / 1.5,
+    n_birds=100,
+    speed=1.0,
+    cohere_factor=0.25,
+    separation=4.0,
+    separate_factor=0.25,
+    match_factor=0.01,
+    visual_distance=5.0,
+    extent=(100, 100),
+    spacing=visual_distance / 1.5,
 )
     space2d = ContinuousSpace(extent; spacing)
-    model = ABM(Bird, space2d, scheduler = Schedulers.Randomly())
+    model = ABM(Bird, space2d; scheduler=Schedulers.Randomly())
     for _ in 1:n_birds
         vel = Tuple(rand(model.rng, 2) * 2 .- 1)
         add_agent!(
@@ -74,6 +74,5 @@ function flocking_agent_step!(bird, model)
     match = match ./ N .* bird.match_factor
     bird.vel = (bird.vel .+ cohere .+ separate .+ match) ./ 2
     bird.vel = bird.vel ./ norm(bird.vel)
-    move_agent!(bird, model, bird.speed)
+    return move_agent!(bird, model, bird.speed)
 end
-

@@ -13,10 +13,10 @@ Base.eltype(s::ContinuousSpace{D,P,T,F}) where {D,P,T,F} = T
 no_vel_update(a, m) = nothing
 spacesize(space::ContinuousSpace) = space.extent
 function Base.show(io::IO, space::ContinuousSpace{D,P}) where {D,P}
-    s = "$(P ? "periodic" : "") continuous space with $(spacesize(space)) extent"*
-    " and spacing=$(space.spacing)"
+    s = "$(P ? "periodic" : "") continuous space with $(spacesize(space)) extent" *
+        " and spacing=$(space.spacing)"
     space.update_vel! ≠ no_vel_update && (s *= " with velocity updates")
-    print(io, s)
+    return print(io, s)
 end
 
 """
@@ -81,40 +81,40 @@ If you want exact searches use the slower [`nearby_ids_exact`](@ref).
 """
 function ContinuousSpace(
     extent::NTuple{D,X};
-    spacing = minimum(extent)/20.0,
-    update_vel! = no_vel_update,
-    periodic = true,
+    spacing=minimum(extent) / 20.0,
+    (update_vel!)=no_vel_update,
+    periodic=true,
 ) where {D,X<:Real}
     if extent ./ spacing != floor.(extent ./ spacing)
         error("All dimensions in `extent` must be completely divisible by `spacing`")
     end
-    s = GridSpace(floor.(Int, extent ./ spacing); periodic, metric = :euclidean)
+    s = GridSpace(floor.(Int, extent ./ spacing); periodic, metric=:euclidean)
     Z = X <: AbstractFloat ? X : Float64
     return ContinuousSpace(s, update_vel!, size(s), Z(spacing), Z.(extent))
 end
 
 function random_position(model::ABM{<:ContinuousSpace})
-    map(dim -> rand(model.rng) * dim, spacesize(model))
+    return map(dim -> rand(model.rng) * dim, spacesize(model))
 end
 
 "given position in continuous space, return cell coordinates in grid space."
-pos2cell(pos::Tuple, model::ABM) = @. floor(Int, pos/model.space.spacing) + 1
+pos2cell(pos::Tuple, model::ABM) = @. floor(Int, pos / model.space.spacing) + 1
 pos2cell(a::AbstractAgent, model::ABM) = pos2cell(a.pos, model)
 
 "given position in continuous space, return continuous space coordinates of cell center."
 function cell_center(pos::NTuple{D,<:AbstractFloat}, model) where {D}
     ε = model.space.spacing
-    (pos2cell(pos, model) .- 1) .* ε .+ ε/2
+    return (pos2cell(pos, model) .- 1) .* ε .+ ε / 2
 end
 
 distance_from_cell_center(pos, model::ABM) =
     distance_from_cell_center(pos, cell_center(pos, model))
 function distance_from_cell_center(pos::Tuple, center::Tuple)
-    sqrt(sum(abs2.(pos .- center)))
+    return sqrt(sum(abs2.(pos .- center)))
 end
 
 function add_agent_to_space!(
-    a::A, model::ABM{<:ContinuousSpace,A}, cell_index = pos2cell(a, model)) where {A<:AbstractAgent}
+    a::A, model::ABM{<:ContinuousSpace,A}, cell_index=pos2cell(a, model)) where {A<:AbstractAgent}
     push!(model.space.grid.stored_ids[cell_index...], a.id)
     return a
 end
@@ -122,7 +122,7 @@ end
 function remove_agent_from_space!(
     a::A,
     model::ABM{<:ContinuousSpace,A},
-    cell_index = pos2cell(a, model),
+    cell_index=pos2cell(a, model),
 ) where {A<:AbstractAgent}
     prev = model.space.grid.stored_ids[cell_index...]
     ai = findfirst(i -> i == a.id, prev)
@@ -133,7 +133,7 @@ end
 # We re-write this for performance, because if cell doesn't change, we don't have to
 # move the agent in the GridSpace; only change its position field
 function move_agent!(agent::A, pos::ValidPos, model::ABM{<:ContinuousSpace{D},A}
-    ) where {D, A<:AbstractAgent}
+) where {D,A<:AbstractAgent}
     for i in 1:D
         pos[i] > spacesize(model)[i] && error("position is outside space extent!")
     end
@@ -146,8 +146,6 @@ function move_agent!(agent::A, pos::ValidPos, model::ABM{<:ContinuousSpace{D},A}
     agent.pos = pos
     return agent
 end
-
-
 
 """
     move_agent!(agent::A, model::ABM{<:ContinuousSpace,A}, dt::Real)
@@ -169,7 +167,7 @@ function move_agent!(
 ) where {A<:AbstractAgent}
     model.space.update_vel!(agent, model)
     direction = dt .* agent.vel
-    walk!(agent, direction, model)
+    return walk!(agent, direction, model)
 end
 
 #######################################################################################
@@ -188,9 +186,9 @@ function offsets_within_radius(model::ABM{<:ContinuousSpace}, r::Real)
     return offsets_within_radius(model.space.grid, r)
 end
 
-function nearby_ids(pos::ValidPos, model::ABM{<:ContinuousSpace{D,A,T}}, r = 1;
-        exact = false,
-    ) where {D,A,T}
+function nearby_ids(pos::ValidPos, model::ABM{<:ContinuousSpace{D,A,T}}, r=1;
+    exact=false,
+) where {D,A,T}
     if exact
         @warn("Keyword `exact` in `nearby_ids` is deprecated. Use `nearby_ids_exact`.")
         nearby_ids_exact(pos, model, r)
@@ -212,7 +210,7 @@ Only valid for `ContinuousSpace` models.
 Use instead of [`nearby_ids`](@ref) for a slower, but 100% accurate version.
 See [`ContinuousSpace`](@ref) for more details.
 """
-function nearby_ids_exact(pos::ValidPos, model::ABM{<:ContinuousSpace{D,A,T}}, r = 1) where {D,A,T}
+function nearby_ids_exact(pos::ValidPos, model::ABM{<:ContinuousSpace{D,A,T}}, r=1) where {D,A,T}
     # TODO:
     # Simply filtering the output leads to 4x faster code than the commented-out logic.
     # It is because the code of the "fast logic" is actually super type unstable.
@@ -262,12 +260,11 @@ function nearby_ids_exact(pos::ValidPos, model::ABM{<:ContinuousSpace{D,A,T}}, r
 end
 
 # Do the standard extensions for `_exact` as in space API
-function nearby_ids_exact(agent::A, model::ABM, r = 1) where {A<:AbstractAgent}
+function nearby_ids_exact(agent::A, model::ABM, r=1) where {A<:AbstractAgent}
     all = nearby_ids_exact(agent.pos, model, r)
-    Iterators.filter(i -> i ≠ agent.id, all)
+    return Iterators.filter(i -> i ≠ agent.id, all)
 end
 nearby_agents_exact(a, model, r=1) = (model[id] for id in nearby_ids_exact(a, model, r))
-
 
 #######################################################################################
 # Continuous space exclusives: collisions, nearest neighbors
@@ -316,7 +313,7 @@ Return a boolean encoding whether the collision happened.
 Example usage in [Continuous space social distancing](
 https://juliadynamics.github.io/AgentsExampleZoo.jl/dev/examples/social_distancing/).
 """
-function elastic_collision!(a, b, f = nothing)
+function elastic_collision!(a, b, f=nothing)
     # Do elastic collision according to
     # https://en.wikipedia.org/wiki/Elastic_collision#Two-dimensional_collision_with_two_moving_objects
     v1, v2, x1, x2 = a.vel, b.vel, a.pos, b.pos
@@ -400,8 +397,8 @@ Example usage in [https://juliadynamics.github.io/AgentsExampleZoo.jl/dev/exampl
 
 """
 function interacting_pairs(model::ABM{<:ContinuousSpace}, r::Real, method;
-        scheduler = model.scheduler, nearby_f = nearby_ids_exact,
-    )
+    scheduler=model.scheduler, nearby_f=nearby_ids_exact,
+)
     @assert method ∈ (:nearest, :all, :types)
     pairs = Tuple{Int,Int}[]
     if method == :nearest
@@ -464,12 +461,12 @@ function true_pairs!(pairs::Vector{Tuple{Int,Int}}, model::ABM{<:ContinuousSpace
         else
             # doubles are not from first sorted, there could be more than one.
             idxs = findall(isequal(doubles), last.(pairs))
-            to_keep = findmin(map(i->distances[i], idxs))[2]
+            to_keep = findmin(map(i -> distances[i], idxs))[2]
             deleteat!(idxs, to_keep)
             append!(to_remove, idxs)
         end
     end
-    deleteat!(pairs, unique!(sort!(to_remove)))
+    return deleteat!(pairs, unique!(sort!(to_remove)))
 end
 
 function type_pairs!(
@@ -496,15 +493,14 @@ struct PairIterator{A}
     agents::Dict{Int,A}
 end
 
-Base.eltype(::PairIterator{A}) where {A} = Tuple{A, A}
+Base.eltype(::PairIterator{A}) where {A} = Tuple{A,A}
 Base.length(iter::PairIterator) = length(iter.pairs)
-function Base.iterate(iter::PairIterator, i = 1)
+function Base.iterate(iter::PairIterator, i=1)
     i > length(iter) && return nothing
     p = iter.pairs[i]
     id1, id2 = p
     return (iter.agents[id1], iter.agents[id2]), i + 1
 end
-
 
 #######################################################################################
 # Spatial fields

@@ -27,7 +27,7 @@ with non-zero IDs, either positive or negative. This is not checked internally.
 
 All arguments and keywords behave exactly as in [`GridSpace`](@ref).
 """
-function GridSpaceSingle(d::NTuple{D,Int}; periodic = true, metric = :chebyshev) where {D}
+function GridSpaceSingle(d::NTuple{D,Int}; periodic=true, metric=:chebyshev) where {D}
     s = zeros(Int, d)
     return GridSpaceSingle{D,periodic}(s, metric,
         Dict{Int,Vector{NTuple{D,Int}}}(),
@@ -54,7 +54,7 @@ end
 Base.isempty(pos, model::ABM{<:GridSpaceSingle}) = model.space.stored_ids[pos...] == 0
 # And we also need to extend the iterator of empty positions
 function empty_positions(model::ABM{<:GridSpaceSingle})
-    Iterators.filter(i -> model.space.stored_ids[i...] == 0, positions(model))
+    return Iterators.filter(i -> model.space.stored_ids[i...] == 0, positions(model))
 end
 
 """
@@ -69,7 +69,6 @@ function id_in_position(pos, model::ABM{<:GridSpaceSingle})
     return model.space.stored_ids[pos...]
 end
 
-
 #######################################################################################
 # Implementation of nearby_stuff
 #######################################################################################
@@ -80,9 +79,9 @@ end
 # the duplication is necessary because `nearby_ids(pos, ...)` should in principle
 # contain the id at the given `pos` as well.
 
-function nearby_ids(pos::NTuple{D, Int}, model::ABM{<:GridSpaceSingle{D,true}}, r = 1,
-        get_offset_indices = offsets_within_radius # internal, see last function
-    ) where {D}
+function nearby_ids(pos::NTuple{D,Int}, model::ABM{<:GridSpaceSingle{D,true}}, r=1,
+    get_offset_indices=offsets_within_radius, # internal, see last function
+) where {D}
     nindices = get_offset_indices(model, r)
     stored_ids = model.space.stored_ids
     space_size = size(stored_ids)
@@ -92,9 +91,9 @@ function nearby_ids(pos::NTuple{D, Int}, model::ABM{<:GridSpaceSingle{D,true}}, 
     return valid_pos_iterator
 end
 
-function nearby_ids(pos::NTuple{D, Int}, model::ABM{<:GridSpaceSingle{D,false}}, r = 1,
-        get_offset_indices = offsets_within_radius # internal, see last function
-    ) where {D}
+function nearby_ids(pos::NTuple{D,Int}, model::ABM{<:GridSpaceSingle{D,false}}, r=1,
+    get_offset_indices=offsets_within_radius, # internal, see last function
+) where {D}
     nindices = get_offset_indices(model, r)
     stored_ids = model.space.stored_ids
     positions_iterator = (pos .+ β for β in nindices)
@@ -102,7 +101,7 @@ function nearby_ids(pos::NTuple{D, Int}, model::ABM{<:GridSpaceSingle{D,false}},
     # but also that the accessed location is not empty (i.e., id is not 0)
     array_accesses_iterator = Base.Iterators.filter(
         pos -> checkbounds(Bool, stored_ids, pos...) && stored_ids[pos...] ≠ 0,
-        positions_iterator
+        positions_iterator,
     )
     return (stored_ids[pos...] for pos in array_accesses_iterator)
 end
@@ -113,7 +112,7 @@ end
 # Here we implement a new version for neighborhoods, similar to abusive_unkillable.jl.
 # The extension uses the function `offsets_within_radius_no_0` from spaces/grid_general.jl
 function nearby_ids(
-    a::A, model::ABM{<:GridSpaceSingle{D},A}, r = 1) where {D,A<:AbstractAgent}
+    a::A, model::ABM{<:GridSpaceSingle{D},A}, r=1) where {D,A<:AbstractAgent}
     return nearby_ids(a.pos, model, r, offsets_within_radius_no_0)
 end
 
@@ -121,7 +120,7 @@ end
 function walk!(
     agent::AbstractAgent,
     direction::NTuple{D,Int},
-    model::ABM{<:GridSpaceSingle}
+    model::ABM{<:GridSpaceSingle},
 ) where {D}
     target = normalize_position(agent.pos .+ direction, model)
     if isempty(target, model) # if target unoccupied

@@ -25,26 +25,25 @@ sir(;
 Same as in [SIR model for the spread of COVID-19](@ref).
 """
 function sir(;
-    C = 8,
-    max_travel_rate = 0.01,
-    Ns = rand(50:5000, C),
-    β_und = rand(0.3:0.02:0.6, C),
-    β_det = β_und ./ 10,
-    infection_period = 30,
-    reinfection_probability = 0.05,
-    detection_time = 14,
-    death_rate = 0.02,
-    Is = [zeros(Int, length(Ns) - 1)..., 1],
-    seed = 19,
+    C=8,
+    max_travel_rate=0.01,
+    Ns=rand(50:5000, C),
+    β_und=rand(0.3:0.02:0.6, C),
+    β_det=β_und ./ 10,
+    infection_period=30,
+    reinfection_probability=0.05,
+    detection_time=14,
+    death_rate=0.02,
+    Is=[zeros(Int, length(Ns) - 1)..., 1],
+    seed=19,
 )
-
     rng = Xoshiro(seed)
     migration_rates = zeros(C, C)
     @assert length(Ns) ==
-    length(Is) ==
-    length(β_und) ==
-    length(β_det) ==
-    size(migration_rates, 1) "length of Ns, Is, and B, and number of rows/columns in migration_rates should be the same "
+            length(Is) ==
+            length(β_und) ==
+            length(β_det) ==
+            size(migration_rates, 1) "length of Ns, Is, and B, and number of rows/columns in migration_rates should be the same "
     @assert size(migration_rates, 1) == size(migration_rates, 2) "migration_rates rates should be a square matrix"
 
     for c in 1:C
@@ -57,7 +56,7 @@ function sir(;
     migration_rates[diagind(migration_rates)] .= 1.0
 
     ## normalize migration_rates
-    migration_rates_sum = sum(migration_rates, dims = 2)
+    migration_rates_sum = sum(migration_rates; dims=2)
     for c in 1:C
         migration_rates[c, :] ./= migration_rates_sum[c]
     end
@@ -73,7 +72,7 @@ function sir(;
         :reinfection_probability => reinfection_probability,
         :detection_time => detection_time,
         :C => C,
-        :death_rate => death_rate
+        :death_rate => death_rate,
     )
 
     space = GraphSpace(Agents.Graphs.complete_graph(C))
@@ -99,7 +98,7 @@ function sir_agent_step!(agent, model)
     sir_migrate!(agent, model)
     sir_transmit!(agent, model)
     sir_update!(agent, model)
-    sir_recover_or_die!(agent, model)
+    return sir_recover_or_die!(agent, model)
 end
 
 function sir_migrate!(agent, model)

@@ -9,14 +9,14 @@ end
     zombies(; seed = 1234)
 Same as in the [Zombie Outbreak](@ref) example.
 """
-function zombies(; seed = 1234)
+function zombies(; seed=1234)
     map_path = OSM.test_map()
     properties = Dict(:dt => 1 / 60)
     model = ABM(
         Zombie,
         OpenStreetMapSpace(map_path);
-        properties = properties,
-        rng = Random.MersenneTwister(seed)
+        properties=properties,
+        rng=Random.MersenneTwister(seed),
     )
 
     for id in 1:100
@@ -24,7 +24,7 @@ function zombies(; seed = 1234)
         speed = rand(model.rng) * 5.0 + 2.0 # Random speed from 2-7kmph
         human = Zombie(id, start, false, speed)
         add_agent_pos!(human, model)
-        OSM.plan_random_route!(human, model; limit = 50) # try 50 times to find a random route
+        OSM.plan_random_route!(human, model; limit=50) # try 50 times to find a random route
     end
     ## We'll add patient zero at a specific (latitude, longitude)
     start = OSM.nearest_road((51.5328328, 9.9351811), model)
@@ -43,7 +43,7 @@ function zombie_agent_step!(agent, model)
 
     if is_stationary(agent, model) && rand(model.rng) < 0.1
         ## When stationary, give the agent a 10% chance of going somewhere else
-        OSM.plan_random_route!(agent, model; limit = 50)
+        OSM.plan_random_route!(agent, model; limit=50)
         ## Start on new route
         move_along_route!(agent, model, distance_left)
     end

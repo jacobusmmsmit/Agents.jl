@@ -6,7 +6,7 @@
 
 function ContinuousSpace(extent, spacing; kwargs...)
     @warn "Specifying `spacing` by position is deprecated. Use keyword `spacing` instead."
-    return ContinuousSpace(extent; spacing = spacing, kwargs...)
+    return ContinuousSpace(extent; spacing=spacing, kwargs...)
 end
 
 """
@@ -17,12 +17,11 @@ when using a pseudo-random number generator like `MersenneTwister`.
 """
 function seed!(model::ABM, args...)
     @warn "`seed!(model::ABM, ...)` is deprecated. Do `seed!(abmrng(model), ...)`."
-    Random.seed!(abmrng(model), args...)
+    return Random.seed!(abmrng(model), args...)
 end
 
 # From before the move to an interface for ABMs and making `ABM` abstract.
 AgentBasedModel(args...; kwargs...) = SingleContainerABM(args...; kwargs...)
-
 
 """
     walk!(agent, rand, model)
@@ -35,10 +34,10 @@ This functionality is deprecated. Use [`randomwalk!`](@ref) instead.
 """
 function walk!(agent, ::typeof(rand), model::ABM{<:AbstractGridSpace{D}}; kwargs...) where {D}
     @warn "Producing random walks through `walk!` is deprecated. Use `randomwalk!` instead."
-    walk!(agent, Tuple(rand(model.rng, -1:1, D)), model; kwargs...)
+    return walk!(agent, Tuple(rand(model.rng, -1:1, D)), model; kwargs...)
 end
 
 function walk!(agent, ::typeof(rand), model::ABM{<:ContinuousSpace{D}}) where {D}
     @warn "Producing random walks through `walk!` is deprecated. Use `randomwalk!` instead."
-    walk!(agent, Tuple(2.0 * rand(model.rng) - 1.0 for _ in 1:D), model)
+    return walk!(agent, Tuple(2.0 * rand(model.rng) - 1.0 for _ in 1:D), model)
 end

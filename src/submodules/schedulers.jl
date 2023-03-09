@@ -76,7 +76,7 @@ ByID() = ByID(Int[])
 
 function (sched::ByID)(model::ABM)
     get_ids!(sched.ids, model)
-    sort!(sched.ids)
+    return sort!(sched.ids)
 end
 
 """
@@ -85,7 +85,7 @@ A scheduler that activates all agents once per step in a random order.
 Different random ordering is used at each different step.
 """
 function randomly(model::ABM)
-    order = shuffle!(model.rng, collect(allids(model)))
+    return order = shuffle!(model.rng, collect(allids(model)))
 end
 
 struct Randomly
@@ -100,7 +100,7 @@ Different random ordering is used at each different step.
 Randomly() = Randomly(Int[])
 function (sched::Randomly)(model::ABM)
     get_ids!(sched.ids, model)
-    shuffle!(model.rng, sched.ids)
+    return shuffle!(model.rng, sched.ids)
 end
 
 """
@@ -130,7 +130,7 @@ Partially(p::R) where {R<:Real} = Partially{R}(p, Int[], Int[])
 
 function (sched::Partially)(model::ABM)
     get_ids!(sched.all_ids, model)
-    randsubseq!(model.rng, sched.schedule, sched.all_ids, sched.p)
+    return randsubseq!(model.rng, sched.schedule, sched.all_ids, sched.p)
 end
 
 """
@@ -205,7 +205,7 @@ function by_type(shuffle_types::Bool, shuffle_agents::Bool)
                 shuffle!(model.rng, set)
             end
         end
-        vcat(sets...)
+        return vcat(sets...)
     end
 end
 
@@ -231,7 +231,7 @@ function by_type(order::Tuple{Type,Vararg{Type}}, shuffle_agents::Bool)
                 shuffle!(model.rng, set)
             end
         end
-        vcat(sets...)
+        return vcat(sets...)
     end
 end
 
@@ -257,7 +257,7 @@ function ByType(shuffle_types::Bool, shuffle_agents::Bool, agent_union)
         shuffle_types,
         shuffle_agents,
         Dict(t => i for (i, t) in enumerate(types)),
-        [Int[] for _ in 1:length(types)]
+        [Int[] for _ in 1:length(types)],
     )
 end
 
@@ -272,7 +272,7 @@ function ByType(order::Tuple{Type,Vararg{Type}}, shuffle_agents::Bool)
         false,
         shuffle_agents,
         Dict(t => i for (i, t) in enumerate(order)),
-        [Int[] for _ in 1:length(order)]
+        [Int[] for _ in 1:length(order)],
     )
 end
 

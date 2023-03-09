@@ -21,18 +21,18 @@ Example usage in [Wright-Fisher model of evolution](https://juliadynamics.github
 function sample!(
     model::ABM,
     n::Int,
-    weight = nothing;
-    replace = true,
+    weight=nothing;
+    replace=true,
 )
     nagents(model) == 0 && return nothing
     org_ids = collect(allids(model))
     if weight !== nothing
         weights = Weights([get_data(a, weight, identity) for a in values(model.agents)])
-        newids = sample(model.rng, org_ids, weights, n, replace = replace)
+        newids = sample(model.rng, org_ids, weights, n; replace=replace)
     else
-        newids = sample(model.rng, org_ids, n, replace = replace)
+        newids = sample(model.rng, org_ids, n; replace=replace)
     end
-    add_newids!(model, org_ids, newids)
+    return add_newids!(model, org_ids, newids)
 end
 
 #Used in sample!

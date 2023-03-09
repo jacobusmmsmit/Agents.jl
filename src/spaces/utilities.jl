@@ -1,6 +1,5 @@
 export euclidean_distance, manhattan_distance, get_direction, spacesize
 
-
 """
     spacesize(model::ABM)
 
@@ -21,8 +20,8 @@ sense: currently `AbstractGridSpace` and `ContinuousSpace`.
 
 Example usage in the [Flocking model](@ref).
 """
-euclidean_distance(a::A, b::B, model::ABM,
-) where {A <: AbstractAgent,B <: AbstractAgent} = euclidean_distance(a.pos, b.pos, model.space)
+euclidean_distance(a::A, b::B, model::ABM
+) where {A<:AbstractAgent,B<:AbstractAgent} = euclidean_distance(a.pos, b.pos, model.space)
 
 euclidean_distance(p1, p2, model::ABM) = euclidean_distance(p1, p2, model.space)
 
@@ -31,7 +30,7 @@ function euclidean_distance(
     p2::ValidPos,
     space::Union{ContinuousSpace{D,false},AbstractGridSpace{D,false}},
 ) where {D}
-    sqrt(sum(abs2.(p1 .- p2)))
+    return sqrt(sum(abs2.(p1 .- p2)))
 end
 
 function euclidean_distance(
@@ -40,7 +39,7 @@ function euclidean_distance(
     space::Union{ContinuousSpace{D,true},AbstractGridSpace{D,true}},
 ) where {D}
     direct = abs.(p1 .- p2)
-    sqrt(sum(min.(direct, spacesize(space) .- direct).^2))
+    return sqrt(sum(min.(direct, spacesize(space) .- direct) .^ 2))
 end
 
 """
@@ -51,7 +50,7 @@ respecting periodic boundary conditions (if in use). Works with any space where 
 sense: currently `AbstractGridSpace` and `ContinuousSpace`.
 """
 manhattan_distance(a::A, b::B, model::ABM
-) where {A <: AbstractAgent,B <: AbstractAgent} = manhattan_distance(a.pos, b.pos, model.space)
+) where {A<:AbstractAgent,B<:AbstractAgent} = manhattan_distance(a.pos, b.pos, model.space)
 
 manhattan_distance(p1, p2, model::ABM) = euclidean_distance(p1, p2, model.space)
 
@@ -60,16 +59,16 @@ function manhattan_distance(
     p2::ValidPos,
     space::Union{ContinuousSpace{D,false},AbstractGridSpace{D,false}},
 ) where {D}
-    sum(abs.(p1 .- p2))
+    return sum(abs.(p1 .- p2))
 end
 
 function manhattan_distance(
     p1::ValidPos,
     p2::ValidPos,
-    space::Union{ContinuousSpace{D,true},AbstractGridSpace{D,true}}
+    space::Union{ContinuousSpace{D,true},AbstractGridSpace{D,true}},
 ) where {D}
     direct = abs.(p1 .- p2)
-    sum(min.(direct, spacesize(space) .- direct))
+    return sum(min.(direct, spacesize(space) .- direct))
 end
 
 """
@@ -133,16 +132,14 @@ function nearby_positions(
         isempty(thislevel) && return nearby
         k = length(nearby)
         k == n && return nearby
-    	for v in thislevel
-    	    for w in nearby_positions(v, model; kwargs...)
-    	        if w ∉ seen
-    	            push!(seen, w)
-    	            push!(nearby, w)
-    	        end
-    	    end
-    	end
+        for v in thislevel
+            for w in nearby_positions(v, model; kwargs...)
+                if w ∉ seen
+                    push!(seen, w)
+                    push!(nearby, w)
+                end
+            end
+        end
     end
     return nearby
 end
-
-

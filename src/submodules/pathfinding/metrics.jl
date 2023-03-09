@@ -23,7 +23,6 @@ DirectDistance{D}() where {D} = DirectDistance{D}([floor(Int, 10.0 * √x) for x
 
 Base.show(io::IO, metric::DirectDistance) = print(io, "DirectDistance")
 
-
 """
     Pathfinding.MaxDistance{D}() <: CostMetric{D}
 Distance between two tiles is approximated as the maximum of absolute

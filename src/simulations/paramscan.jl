@@ -75,15 +75,14 @@ adf, _ = paramscan(parameters, initialize; adata, agent_step!, n = 3)
 function paramscan(
     parameters::Dict,
     initialize;
-    include_constants::Bool = false,
-    parallel::Bool = false,
-    agent_step! = dummystep,
-    model_step! = dummystep,
-    n = 1,
-    showprogress::Bool = false,
+    include_constants::Bool=false,
+    parallel::Bool=false,
+    (agent_step!)=dummystep,
+    (model_step!)=dummystep,
+    n=1,
+    showprogress::Bool=false,
     kwargs...,
 )
-
     if include_constants
         output_params = collect(keys(parameters))
     else
@@ -92,11 +91,11 @@ function paramscan(
 
     combs = dict_list(parameters)
 
-    progress = ProgressMeter.Progress(length(combs); enabled = showprogress)
+    progress = ProgressMeter.Progress(length(combs); enabled=showprogress)
     mapfun = parallel ? pmap : map
     all_data = ProgressMeter.progress_map(combs; mapfun, progress) do comb
-        run_single(comb, output_params, initialize;
-                   agent_step!, model_step!, n, kwargs...)
+        return run_single(comb, output_params, initialize;
+            agent_step!, model_step!, n, kwargs...)
     end
 
     df_agent = DataFrame()
@@ -117,7 +116,7 @@ function dict_list(c::Dict)
     iterable_dict = Dict(iterable_fields .=> getindex.(Ref(c), iterable_fields))
     non_iterable_dict = Dict(non_iterables .=> getindex.(Ref(c), non_iterables))
 
-    vec(map(Iterators.product(values(iterable_dict)...)) do vals
+    return vec(map(Iterators.product(values(iterable_dict)...)) do vals
         dd = Dict(keys(iterable_dict) .=> vals)
         if isempty(non_iterable_dict)
             dd
@@ -133,9 +132,9 @@ function run_single(
     param_dict::Dict,
     output_params::Vector{Symbol},
     initialize;
-    agent_step! = dummystep,
-    model_step! = dummystep,
-    n = 1,
+    (agent_step!)=dummystep,
+    (model_step!)=dummystep,
+    n=1,
     kwargs...,
 )
     model = initialize(; param_dict...)

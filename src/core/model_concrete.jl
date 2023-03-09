@@ -1,7 +1,7 @@
 export ABM, StandardABM, UnkillableABM, FixedMassABM
 using StaticArrays: SizedVector
 
-ContainerType{A} = Union{AbstractDict{Int,A}, AbstractVector{A}}
+ContainerType{A} = Union{AbstractDict{Int,A},AbstractVector{A}}
 
 # And the three implementations here are just variants with different `C` type.
 struct SingleContainerABM{S<:SpaceType,A<:AbstractAgent,C<:ContainerType{A},F,P,R<:AbstractRNG} <: AgentBasedModel{S,A}
@@ -39,12 +39,12 @@ single container. Offers the variants:
 """
 function SingleContainerABM(
     ::Type{A},
-    space::S = nothing;
-    container::Type = Dict{Int},
-    scheduler::F = Schedulers.fastest,
-    properties::P = nothing,
-    rng::R = Random.default_rng(),
-    warn = true
+    space::S=nothing;
+    container::Type=Dict{Int},
+    scheduler::F=Schedulers.fastest,
+    properties::P=nothing,
+    rng::R=Random.default_rng(),
+    warn=true,
 ) where {A<:AbstractAgent,S<:SpaceType,F,P,R<:AbstractRNG}
     agent_validator(A, space, warn)
     C = construct_agent_container(container, A)
@@ -59,7 +59,7 @@ end
 construct_agent_container(::Type{<:Dict}, A) = Dict{Int,A}
 construct_agent_container(::Type{<:Vector}, A) = Vector{A}
 construct_agent_container(container, A) = throw(
-    "Unrecognised container $container, please specify either Dict or Vector."
+    "Unrecognised container $container, please specify either Dict or Vector.",
 )
 
 """
@@ -101,13 +101,13 @@ in the given `agent_vector`.
 """
 function FixedMassABM(
     agents::AbstractVector{A},
-    space::S = nothing;
-    scheduler::F = Schedulers.fastest,
-    properties::P = nothing,
-    rng::R = Random.default_rng(),
-    warn = true
-) where {A<:AbstractAgent, S<:SpaceType,F,P,R<:AbstractRNG}
-    C = SizedVector{length(agents), A}
+    space::S=nothing;
+    scheduler::F=Schedulers.fastest,
+    properties::P=nothing,
+    rng::R=Random.default_rng(),
+    warn=true,
+) where {A<:AbstractAgent,S<:SpaceType,F,P,R<:AbstractRNG}
+    C = SizedVector{length(agents),A}
     fixed_agents = C(agents)
     # Validate that agent ID is the same as its order in the vector.
     for (i, a) in enumerate(agents)
@@ -120,11 +120,11 @@ end
 #######################################################################################
 # %% Model accessing api
 #######################################################################################
-nextid(model::SingleContainerABM{<:SpaceType,A,Dict{Int, A}}) where {A} = getfield(model, :maxid)[] + 1
+nextid(model::SingleContainerABM{<:SpaceType,A,Dict{Int,A}}) where {A} = getfield(model, :maxid)[] + 1
 nextid(model::SingleContainerABM{<:SpaceType,A,Vector{A}}) where {A} = nagents(model) + 1
 nextid(::SingleContainerABM{<:SpaceType,A,<:SizedVector}) where {A} = error("There is no `nextid` in a `FixedMassABM`. Most likely an internal error.")
 
-function add_agent_to_model!(agent, model::SingleContainerABM{<:SpaceType,A,Dict{Int, A}}) where {A<:AbstractAgent}
+function add_agent_to_model!(agent, model::SingleContainerABM{<:SpaceType,A,Dict{Int,A}}) where {A<:AbstractAgent}
     if haskey(agent_container(model), agent.id)
         error("Can't add agent to model. There is already an agent with id=$(agent.id)")
     else
@@ -133,7 +133,9 @@ function add_agent_to_model!(agent, model::SingleContainerABM{<:SpaceType,A,Dict
     # Only the `Dict` implementation actually uses the `maxid` field.
     # The `Vector` one uses the defaults, and the `Sized` one errors anyways.
     maxid = getfield(model, :maxid)
-    if maxid[] < agent.id; maxid[] = agent.id; end
+    if maxid[] < agent.id
+        maxid[] = agent.id
+    end
     return
 end
 
@@ -144,12 +146,12 @@ function add_agent_to_model!(agent, model::SingleContainerABM{<:SpaceType,A,Vect
 end
 
 function remove_agent_from_model!(agent::A, model::SingleContainerABM{<:SpaceType,A,<:AbstractDict{Int,A}}) where {A<:AbstractAgent}
-    delete!(agent_container(model), agent.id)
+    return delete!(agent_container(model), agent.id)
 end
 function remove_agent_from_model!(::A, model::SingleContainerABM{<:SpaceType,A,<:AbstractVector}) where {A<:AbstractAgent}
-    error(
-    "Cannot remove agents stored in $(containertype(model)). "*
-    "Use the vanilla `SingleContainerABM` to be able to remove agents."
+    return error(
+        "Cannot remove agents stored in $(containertype(model)). " *
+        "Use the vanilla `SingleContainerABM` to be able to remove agents.",
     )
 end
 
@@ -188,18 +190,18 @@ end
     do_checks(agent, space)
 Helper function for `agent_validator`.
 """
-function do_checks(::Type{A}, space::S, warn::Bool) where {A<:AbstractAgent, S<:SpaceType}
+function do_checks(::Type{A}, space::S, warn::Bool) where {A<:AbstractAgent,S<:SpaceType}
     if warn
         isbitstype(A) &&
-        @warn "Agent type is not mutable, and most library functions assume that it is."
+            @warn "Agent type is not mutable, and most library functions assume that it is."
     end
     (any(isequal(:id), fieldnames(A)) && fieldnames(A)[1] == :id) ||
-    throw(ArgumentError("First field of agent type must be `id` (and should be of type `Int`)."))
+        throw(ArgumentError("First field of agent type must be `id` (and should be of type `Int`)."))
     fieldtype(A, :id) <: Integer ||
-    throw(ArgumentError("`id` field in agent type must be of type `Int`."))
+        throw(ArgumentError("`id` field in agent type must be of type `Int`."))
     if space !== nothing
         (any(isequal(:pos), fieldnames(A)) && fieldnames(A)[2] == :pos) ||
-        throw(ArgumentError("Second field of agent type must be `pos` when using a space."))
+            throw(ArgumentError("Second field of agent type must be `pos` when using a space."))
         # Check `pos` field in A has the correct type
         pos_type = fieldtype(A, :pos)
         space_type = typeof(space)

@@ -22,9 +22,8 @@ ValidPos = Union{
     Int, # graph
     NTuple{N,Int}, # grid
     NTuple{M,<:AbstractFloat}, # continuous
-    Tuple{Int,Int,Float64} # osm
+    Tuple{Int,Int,Float64}, # osm
 } where {N,M}
-
 
 """
     AgentBasedModel
@@ -81,12 +80,12 @@ Here we the most important information on how to query an instance of `AgentBase
 
 Many more functions exist in the API page, such as [`allagents`](@ref).
 """
-abstract type AgentBasedModel{S<:SpaceType, A<:AbstractAgent} end
+abstract type AgentBasedModel{S<:SpaceType,A<:AbstractAgent} end
 const ABM = AgentBasedModel
 
 function notimplemented(model)
-    error("Function not implemented for model of type $(nameof(typeof(model))) "*
-    "with space type $(nameof(typeof(abmspace(model))))")
+    return error("Function not implemented for model of type $(nameof(typeof(model))) " *
+                 "with space type $(nameof(typeof(abmspace(model))))")
 end
 
 ###########################################################################################
@@ -180,7 +179,7 @@ function allocating_random_agent(model, condition)
     return nothing
 end
 
-function optimistic_random_agent(model, condition; n_attempts = 3*nagents(model))
+function optimistic_random_agent(model, condition; n_attempts=3 * nagents(model))
     rng = abmrng(model)
     for _ in 1:n_attempts
         idx = rand(rng, allids(model))
@@ -240,7 +239,6 @@ function Base.setproperty!(m::ABM, s::Symbol, x)
     end
 end
 
-
 ###########################################################################################
 # %% Non-public methods. Must be implemented but are not exported
 ###########################################################################################
@@ -268,6 +266,6 @@ Return the space instance stored in the `model`.
 abmspace(model::ABM) = getfield(model, :space)
 
 function Base.setindex!(m::ABM, args...; kwargs...)
-    error("`setindex!` or `model[id] = agent` are invalid. Use `add_agent!(model, agent)` "*
-    "or other variants of an `add_agent_...` function to add agents to an ABM.")
+    return error("`setindex!` or `model[id] = agent` are invalid. Use `add_agent!(model, agent)` " *
+                 "or other variants of an `add_agent_...` function to add agents to an ABM.")
 end

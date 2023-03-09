@@ -11,8 +11,7 @@ agents are stored in a field `stored_ids` of the space.
 =#
 
 export positions, npositions, ids_in_position, agents_in_position,
-       empty_positions, random_empty, has_empty_positions
-
+    empty_positions, random_empty, has_empty_positions
 
 positions(model::ABM) = positions(model.space)
 """
@@ -32,7 +31,7 @@ function positions(model::ABM{<:DiscreteSpace}, by::Symbol)
     if by == :random
         shuffle!(model.rng, itr)
     elseif by == :population
-        sort!(itr, by = i -> length(ids_in_position(i, model)), rev = true)
+        sort!(itr; by=i -> length(ids_in_position(i, model)), rev=true)
     else
         error("unknown `by`")
     end
@@ -72,7 +71,7 @@ agents_in_position(pos, model) = (model[id] for id in ids_in_position(pos, model
 Return a list of positions that currently have no agents on them.
 """
 function empty_positions(model::ABM{<:DiscreteSpace})
-    Iterators.filter(i -> length(ids_in_position(i, model)) == 0, positions(model))
+    return Iterators.filter(i -> length(ids_in_position(i, model)) == 0, positions(model))
 end
 
 """
@@ -96,7 +95,7 @@ Return a random position without any agents, or `nothing` if no such positions e
 Specifically, when `clamp(nagents(model)/npositions(model), 0.0, 1.0) < cutoff`,
 then the algorithm is probabilistic.
 """
-function random_empty(model::ABM{<:DiscreteSpace}, cutoff = 0.998)
+function random_empty(model::ABM{<:DiscreteSpace}, cutoff=0.998)
     # This switch assumes the worst case (for this algorithm) of one
     # agent per position, which is not true in general but is appropriate
     # here.
@@ -203,7 +202,7 @@ The keyword `cutoff = 0.998` is sent to [`random_empty`](@ref).
 function move_agent_single!(
     agent::A,
     model::ABM{<:DiscreteSpace,A};
-    cutoff = 0.998,
+    cutoff=0.998,
 ) where {A<:AbstractAgent}
     position = random_empty(model, cutoff)
     isnothing(position) && return nothing

@@ -11,7 +11,7 @@ e.g. `(agent1, agent7, agent8)`. `order` must be larger than `1` but has no uppe
 Index order is provided by the model scheduler by default,
 but can be altered with the `scheduler` keyword.
 """
-iter_agent_groups(order::Int, model::ABM; scheduler = model.scheduler) =
+iter_agent_groups(order::Int, model::ABM; scheduler=model.scheduler) =
     Iterators.product((map(i -> model[i], scheduler(model)) for _ in 1:order)...)
 
 """
@@ -38,7 +38,7 @@ map_agent_groups(order::Int, f::Function, model::ABM, filter::Function; kwargs..
     index_mapped_groups(order::Int, model::ABM, filter::Function; scheduler = Schedulers.by_id)
 Return an iterable of agent ids in the model, meeting the `filter` criteria if used.
 """
-index_mapped_groups(order::Int, model::ABM; scheduler = Schedulers.by_id) =
+index_mapped_groups(order::Int, model::ABM; scheduler=Schedulers.by_id) =
     Iterators.product((scheduler(model) for _ in 1:order)...)
-index_mapped_groups(order::Int, model::ABM, filter::Function; scheduler = Schedulers.by_id) =
+index_mapped_groups(order::Int, model::ABM, filter::Function; scheduler=Schedulers.by_id) =
     Iterators.filter(filter, Iterators.product((scheduler(model) for _ in 1:order)...))

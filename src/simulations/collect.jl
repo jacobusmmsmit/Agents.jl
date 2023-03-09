@@ -9,8 +9,8 @@ export run!,
 ###################################################
 # Definition of the data collection API
 ###################################################
-get_data(a, s::Symbol, obtainer::Function = identity) = obtainer(getproperty(a, s))
-get_data(a, f::Function, obtainer::Function = identity) = obtainer(f(a))
+get_data(a, s::Symbol, obtainer::Function=identity) = obtainer(getproperty(a, s))
+get_data(a, f::Function, obtainer::Function=identity) = obtainer(f(a))
 
 get_data_missing(a, s::Symbol, obtainer::Function) =
     hasproperty(a, s) ? obtainer(getproperty(a, s)) : missing
@@ -105,7 +105,7 @@ If `a1.weight` but `a2` (type: Agent2) has no `weight`, use
 """
 function run! end
 
-run!(model::ABM, agent_step!, n::Int = 1; kwargs...) =
+run!(model::ABM, agent_step!, n::Int=1; kwargs...) =
     run!(model::ABM, agent_step!, dummystep, n; kwargs...)
 
 function run!(
@@ -113,15 +113,14 @@ function run!(
     agent_step!,
     model_step!,
     n;
-    when = true,
-    when_model = when,
-    mdata = nothing,
-    adata = nothing,
-    obtainer = identity,
-    agents_first = true,
-    showprogress = false,
+    when=true,
+    when_model=when,
+    mdata=nothing,
+    adata=nothing,
+    obtainer=identity,
+    agents_first=true,
+    showprogress=false,
 )
-
     df_agent = init_agent_dataframe(model, adata)
     df_model = init_model_dataframe(model, mdata)
     if n isa Integer
@@ -141,7 +140,7 @@ function run!(
     p = if typeof(n) <: Int
         ProgressMeter.Progress(n; enabled=showprogress, desc="run! progress: ")
     else
-        ProgressMeter.ProgressUnknown(desc="run! steps done: ", enabled=showprogress)
+        ProgressMeter.ProgressUnknown(; desc="run! steps done: ", enabled=showprogress)
     end
     while until(s, n, model)
         if should_we_collect(s, model, when)
@@ -180,14 +179,14 @@ Collect and add agent data into `df` (see [`run!`](@ref) for the dispatch rules
 of `properties` and `obtainer`). `step` is given because the step number information
 is not known.
 """
-collect_agent_data!(df, model, properties::Nothing, step::Int = 0; kwargs...) = df
+collect_agent_data!(df, model, properties::Nothing, step::Int=0; kwargs...) = df
 
 function init_agent_dataframe(
     model::ABM{S,A},
     properties::AbstractArray,
 ) where {S,A<:AbstractAgent}
     nagents(model) < 1 &&
-        throw(ArgumentError("Model must have at least one agent to initialize data collection",))
+        throw(ArgumentError("Model must have at least one agent to initialize data collection"))
 
     utypes = union_types(A)
     std_headers = length(utypes) > 1 ? 3 : 2
@@ -211,7 +210,7 @@ function init_agent_dataframe(
         single_agent_types!(types, model, properties)
     end
 
-    DataFrame(types, headers)
+    return DataFrame(types, headers)
 end
 
 function single_agent_types!(
@@ -241,16 +240,16 @@ function multi_agent_types!(
     for (i, k) in enumerate(properties)
         current_types = DataType[]
         for atype in utypes
-            a = try 
+            a = try
                 first(Iterators.filter(a -> a isa atype, allagents(model)))
             catch
                 nothing
-            end 
-            
+            end
+
             if k isa Symbol
-                current_type = if hasproperty(a, k) 
+                current_type = if hasproperty(a, k)
                     typeof(get_data(a, k, identity))
-                else 
+                else
                     hasfield(atype, k) ? fieldtype(atype, k) : Missing
                 end
             else
@@ -277,8 +276,8 @@ function multi_agent_types!(
     end
 end
 
-function collect_agent_data!(df, model, properties::Vector, step::Int = 0; kwargs...)
-    alla = sort!(collect(values(model.agents)), by = a -> a.id)
+function collect_agent_data!(df, model, properties::Vector, step::Int=0; kwargs...)
+    alla = sort!(collect(values(model.agents)); by=a -> a.id)
     dd = DataFrame()
     dd[!, :step] = fill(step, length(alla))
     dd[!, :id] = map(a -> a.id, alla)
@@ -298,9 +297,9 @@ function _add_col_data!(
     col::Type{T},
     property,
     agent_iter;
-    obtainer = identity,
+    obtainer=identity,
 ) where {T}
-    dd[!, dataname(property)] = collect(get_data(a, property, obtainer) for a in agent_iter)
+    return dd[!, dataname(property)] = collect(get_data(a, property, obtainer) for a in agent_iter)
 end
 
 function _add_col_data!(
@@ -308,9 +307,9 @@ function _add_col_data!(
     col::Type{T},
     property,
     agent_iter;
-    obtainer = identity,
+    obtainer=identity,
 ) where {T>:Missing}
-    dd[!, dataname(property)] =
+    return dd[!, dataname(property)] =
         collect(get_data_missing(a, property, obtainer) for a in agent_iter)
 end
 
@@ -335,7 +334,7 @@ function init_agent_dataframe(
     else
         single_agent_agg_types!(types, headers, model, properties)
     end
-    DataFrame(types, headers)
+    return DataFrame(types, headers)
 end
 
 function single_agent_agg_types!(
@@ -371,11 +370,11 @@ function multi_agent_agg_types!(
         headers[i+1] = dataname(property)
         current_types = DataType[]
         for atype in utypes
-            a = try 
+            a = try
                 first(Iterators.filter(a -> a isa atype, allagents(model)))
             catch
                 nothing
-            end 
+            end
 
             if k isa Symbol
                 current_type =
@@ -429,7 +428,7 @@ function collect_agent_data!(
     df,
     model::ABM,
     properties::Vector{<:Tuple},
-    step::Int = 0;
+    step::Int=0;
     kwargs...,
 )
     alla = allagents(model)
@@ -445,11 +444,11 @@ function _add_col_data!(
     col::AbstractVector{T},
     property::Tuple{K,A},
     agent_iter;
-    obtainer = identity,
+    obtainer=identity,
 ) where {T,K,A}
     k, agg = property
     res::T = agg(get_data(a, k, obtainer) for a in agent_iter)
-    push!(col, res)
+    return push!(col, res)
 end
 
 # Conditional aggregates
@@ -457,11 +456,11 @@ function _add_col_data!(
     col::AbstractVector{T},
     property::Tuple{K,A,C},
     agent_iter;
-    obtainer = identity,
+    obtainer=identity,
 ) where {T,K,A,C}
     k, agg, condition = property
     res::T = agg(get_data(a, k, obtainer) for a in Iterators.filter(condition, agent_iter))
-    push!(col, res)
+    return push!(col, res)
 end
 
 # Model data
@@ -497,7 +496,7 @@ function init_model_dataframe(model::ABM, properties::Vector)
             current_type[]
         end
     end
-    DataFrame(types, headers)
+    return DataFrame(types, headers)
 end
 
 init_model_dataframe(model::ABM, properties::Function) =
@@ -514,8 +513,8 @@ function collect_model_data!(
     df,
     model,
     properties::Vector,
-    step::Int = 0;
-    obtainer = identity,
+    step::Int=0;
+    obtainer=identity,
 )
     push!(df[!, :step], step)
     for fn in properties
@@ -524,10 +523,10 @@ function collect_model_data!(
     return df
 end
 
-collect_model_data!(df, model, properties::Function, step::Int = 0; kwargs...) =
+collect_model_data!(df, model, properties::Function, step::Int=0; kwargs...) =
     collect_model_data!(df, model, properties(model), step; kwargs...)
 
-collect_model_data!(df, model, properties::Nothing, step::Int = 0; kwargs...) = df
+collect_model_data!(df, model, properties::Nothing, step::Int=0; kwargs...) = df
 
 ###################################################
 # Parallel / replicates

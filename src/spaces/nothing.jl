@@ -6,11 +6,11 @@ otherwise they will try to add `nothing` to the agent position.
 =#
 
 function add_agent_to_space!(::A, ::ABM{Nothing,A}) where {A<:AbstractAgent}
-    nothing
+    return nothing
 end
 
 function add_agent!(agent::A, model::ABM{Nothing,A}) where {A<:AbstractAgent}
-    add_agent_pos!(agent, model)
+    return add_agent_pos!(agent, model)
 end
 
 # We need to extend this one, because otherwise there is a `pos` that
@@ -18,9 +18,9 @@ end
 function add_agent!(A::Type{<:AbstractAgent}, model::ABM{Nothing}, properties...; kwargs...)
     id = nextid(model)
     newagent = A(id, properties...; kwargs...)
-    add_agent_pos!(newagent, model)
+    return add_agent_pos!(newagent, model)
 end
 
-nearby_ids(position, model::ABM{Nothing}, r = 1) = allids(model)
+nearby_ids(position, model::ABM{Nothing}, r=1) = allids(model)
 remove_agent_from_space!(agent, model::ABM{Nothing}) = nothing
 add_agent_to_space!(agent, model::ABM{Nothing}) = nothing

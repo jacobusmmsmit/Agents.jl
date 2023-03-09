@@ -33,7 +33,7 @@ struct AStar{D,P,M,T,C<:CostMetric{D}} <: GridPathfinder{D,P,M}
                 @assert length(cost_metric.direction_costs) >= 1 "DirectDistance direction_costs must have non-zero length"
             end
         end
-        new(agent_paths, dims, neighborhood, admissibility, walkmap, cost_metric)
+        return new(agent_paths, dims, neighborhood, admissibility, walkmap, cost_metric)
     end
 end
 
@@ -63,11 +63,11 @@ Utilization of all features of `AStar` occurs in the
 """
 function AStar(
     dims::NTuple{D,T};
-    periodic::Bool = false,
-    diagonal_movement::Bool = true,
-    admissibility::Float64 = 0.0,
-    walkmap::BitArray{D} = trues(dims),
-    cost_metric::CostMetric{D} = DirectDistance{D}(),
+    periodic::Bool=false,
+    diagonal_movement::Bool=true,
+    admissibility::Float64=0.0,
+    walkmap::BitArray{D}=trues(dims),
+    cost_metric::CostMetric{D}=DirectDistance{D}(),
 ) where {D,T}
     neighborhood = diagonal_movement ? moore_neighborhood(D) : vonneumann_neighborhood(D)
     return AStar{D,periodic,diagonal_movement,T,typeof(cost_metric)}(
@@ -82,24 +82,23 @@ end
 
 AStar(
     space::GridSpace{D,periodic};
-    diagonal_movement::Bool = true,
-    admissibility::Float64 = 0.0,
-    walkmap::BitArray{D} = trues(size(space)),
-    cost_metric::CostMetric{D} = DirectDistance{D}(),
+    diagonal_movement::Bool=true,
+    admissibility::Float64=0.0,
+    walkmap::BitArray{D}=trues(size(space)),
+    cost_metric::CostMetric{D}=DirectDistance{D}(),
 ) where {D,periodic} =
     AStar(size(space); periodic, diagonal_movement, admissibility, walkmap, cost_metric)
 
 function AStar(
     space::ContinuousSpace{D,periodic};
-    walkmap::Union{BitArray{D},Nothing} = nothing,
-    admissibility::Float64 = 0.0,
-    cost_metric::CostMetric{D} = DirectDistance{D}(),
+    walkmap::Union{BitArray{D},Nothing}=nothing,
+    admissibility::Float64=0.0,
+    cost_metric::CostMetric{D}=DirectDistance{D}(),
 ) where {D,periodic}
     @assert walkmap isa BitArray{D} || cost_metric isa PenaltyMap "Pathfinding in ContinuousSpace requires either walkmap to be specified or cost_metric to be a PenaltyMap"
     isnothing(walkmap) && (walkmap = BitArray(trues(size(cost_metric.pmap))))
-    AStar(Agents.spacesize(space); periodic, diagonal_movement = true, admissibility, walkmap, cost_metric)
+    return AStar(Agents.spacesize(space); periodic, diagonal_movement=true, admissibility, walkmap, cost_metric)
 end
-
 
 moore_neighborhood(D) = [
     CartesianIndex(a)
@@ -108,7 +107,7 @@ moore_neighborhood(D) = [
 
 function vonneumann_neighborhood(D)
     hypercube = CartesianIndices((repeat([-1:1], D)...,))
-    [β for β ∈ hypercube if LinearAlgebra.norm(β.I) == 1]
+    return [β for β in hypercube if LinearAlgebra.norm(β.I) == 1]
 end
 
 function Base.show(io::IO, pathfinder::AStar{D,P,M}) where {D,P,M}
@@ -117,7 +116,7 @@ function Base.show(io::IO, pathfinder::AStar{D,P,M}) where {D,P,M}
     s =
         "A* in $(D) dimensions, $(periodic)$(moore)ϵ=$(pathfinder.admissibility), " *
         "metric=$(pathfinder.cost_metric)"
-    print(io, s)
+    return print(io, s)
 end
 
 struct GridCell
@@ -140,9 +139,9 @@ If a path does not exist between the given positions, an empty linked list is re
 """
 function find_path(pathfinder::AStar{D}, from::Dims{D}, to::Dims{D}) where {D}
     if !all(1 .<= from .<= size(pathfinder.walkmap)) ||
-        !all(1 .<= to .<= size(pathfinder.walkmap)) ||
-        !pathfinder.walkmap[from...] ||
-        !pathfinder.walkmap[to...]
+       !all(1 .<= to .<= size(pathfinder.walkmap)) ||
+       !pathfinder.walkmap[from...] ||
+       !pathfinder.walkmap[to...]
         return # nothing
     end
     parent = Dict{Dims{D},Dims{D}}()
@@ -153,7 +152,7 @@ function find_path(pathfinder::AStar{D}, from::Dims{D}, to::Dims{D}) where {D}
     enqueue!(
         open_list,
         from,
-        GridCell(0, delta_cost(pathfinder, from, to), pathfinder.admissibility)
+        GridCell(0, delta_cost(pathfinder, from, to), pathfinder.admissibility),
     )
 
     while !isempty(open_list)
@@ -237,5 +236,5 @@ function Agents.kill_agent!(
 ) where {S,A<:AbstractAgent}
     delete!(pathfinder.agent_paths, agent.id)
     Agents.remove_agent_from_model!(agent, model)
-    Agents.remove_agent_from_space!(agent, model)
+    return Agents.remove_agent_from_space!(agent, model)
 end

@@ -66,7 +66,7 @@ described in each space's documentation string.
 
 `nearby_ids` always includes IDs with 0 distance to `position`.
 """
-nearby_ids(position, model, r = 1) = notimplemented(model)
+nearby_ids(position, model, r=1) = notimplemented(model)
 
 """
     nearby_positions(position, model::ABM{<:DiscreteSpace}, r=1; kwargs...)
@@ -85,7 +85,7 @@ For [`OpenStreetMapSpace`](@ref) this means "nearby intersections" and operates 
 on the underlying graph of the OSM, providing the intersection nodes nearest to the
 given position.
 """
-nearby_positions(position, model, r = 1) = notimplemented(model)
+nearby_positions(position, model, r=1) = notimplemented(model)
 
 #######################################################################################
 # %% OPTIONAL IMPLEMENT
@@ -128,7 +128,7 @@ function move_agent!(agent::A, pos::ValidPos, model::ABM{<:AbstractSpace,A}) whe
     return agent
 end
 function move_agent!(agent, model::ABM)
-    move_agent!(agent, random_position(model), model)
+    return move_agent!(agent, random_position(model), model)
 end
 
 """
@@ -139,7 +139,7 @@ Remove an agent from the model.
 """
 function kill_agent!(a::AbstractAgent, model::ABM)
     remove_agent_from_model!(a, model)
-    remove_agent_from_space!(a, model)
+    return remove_agent_from_space!(a, model)
 end
 kill_agent!(id::Integer, model::ABM) = kill_agent!(model[id], model)
 
@@ -151,7 +151,7 @@ function genocide!(model::ABM)
     for a in allagents(model)
         kill_agent!(a, model)
     end
-    model.maxid[] = 0
+    return model.maxid[] = 0
 end
 
 """
@@ -162,9 +162,8 @@ function genocide!(model::ABM, n::Integer)
     for id in allids(model)
         id > n && kill_agent!(id, model)
     end
-    model.maxid[] = n
+    return model.maxid[] = n
 end
-
 
 """
     genocide!(model::ABM, IDs)
@@ -211,12 +210,12 @@ The type of `pos` must match the underlying space position type.
 """
 function add_agent!(agent::AbstractAgent, model::ABM)
     agent.pos = random_position(model)
-    add_agent_pos!(agent, model)
+    return add_agent_pos!(agent, model)
 end
 
 function add_agent!(agent::AbstractAgent, pos::ValidPos, model::ABM)
     agent.pos = pos
-    add_agent_pos!(agent, model)
+    return add_agent_pos!(agent, model)
 end
 
 """
@@ -254,11 +253,11 @@ add_agent!(model; w = 0.5) # use keywords: w becomes 0.5, k becomes false
 ```
 """
 function add_agent!(model::ABM{S,A}, properties...; kwargs...) where {S,A<:AbstractAgent}
-    add_agent!(A, model, properties...; kwargs...)
+    return add_agent!(A, model, properties...; kwargs...)
 end
 
 function add_agent!(A::Type{<:AbstractAgent}, model::ABM, properties...; kwargs...)
-    add_agent!(random_position(model), A, model, properties...; kwargs...)
+    return add_agent!(random_position(model), A, model, properties...; kwargs...)
 end
 
 function add_agent!(
@@ -267,7 +266,7 @@ function add_agent!(
     properties...;
     kwargs...,
 ) where {S,A<:AbstractAgent}
-    add_agent!(pos, A, model, properties...; kwargs...)
+    return add_agent!(pos, A, model, properties...; kwargs...)
 end
 
 # lowest level:
@@ -280,7 +279,7 @@ function add_agent!(
 )
     id = nextid(model)
     newagent = A(id, pos, properties...; kwargs...)
-    add_agent_pos!(newagent, model)
+    return add_agent_pos!(newagent, model)
 end
 
 #######################################################################################
@@ -292,9 +291,9 @@ end
 Same as `nearby_ids(agent.pos, model, r)` but the iterable *excludes* the given
 `agent`'s id.
 """
-function nearby_ids(agent::A, model::ABM, r = 1; kwargs...) where {A<:AbstractAgent}
+function nearby_ids(agent::A, model::ABM, r=1; kwargs...) where {A<:AbstractAgent}
     all = nearby_ids(agent.pos, model, r; kwargs...)
-    Iterators.filter(i -> i ≠ agent.id, all)
+    return Iterators.filter(i -> i ≠ agent.id, all)
 end
 
 """
@@ -305,10 +304,10 @@ Same as `nearby_positions(agent.pos, model, r)`.
 function nearby_positions(
     agent::A,
     model::ABM{S,A},
-    r = 1;
+    r=1;
     kwargs...,
 ) where {S,A<:AbstractAgent}
-    nearby_positions(agent.pos, model, r; kwargs...)
+    return nearby_positions(agent.pos, model, r; kwargs...)
 end
 
 """
@@ -318,7 +317,7 @@ Return an iterable of the agents near the position of the given `agent`.
 
 The value of the argument `r` and possible keywords operate identically to [`nearby_ids`](@ref).
 """
-nearby_agents(a, model, r = 1; kwargs...) =
+nearby_agents(a, model, r=1; kwargs...) =
     (model[id] for id in nearby_ids(a, model, r; kwargs...))
 
 """
@@ -330,7 +329,7 @@ Return `nothing` if no agents are nearby.
 
 The value of the argument `r` and possible keywords operate identically to [`nearby_ids`](@ref).
 """
-function random_nearby_id(a, model, r = 1; kwargs...)
+function random_nearby_id(a, model, r=1; kwargs...)
     # Uses Reservoir sampling (https://en.wikipedia.org/wiki/Reservoir_sampling)
     iter = nearby_ids(a, model, r; kwargs...)
 
@@ -366,7 +365,7 @@ is nearby.
 
 The value of the argument `r` and possible keywords operate identically to [`nearby_ids`](@ref).
 """
-function random_nearby_agent(a, model, r = 1; kwargs...)
+function random_nearby_agent(a, model, r=1; kwargs...)
     id = random_nearby_id(a, model, r; kwargs...)
     isnothing(id) && return
     return model[id]

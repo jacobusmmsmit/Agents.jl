@@ -213,7 +213,7 @@ macro agent(new_name, base_type, extra_fields)
     # `super_type = AbstractAgent`. This requires us to disable 'macro hygiene', see here
     # for a brief explanation of the potential issues with this: 
     # https://discourse.julialang.org/t/calling-a-macro-from-within-a-macro-revisited/19680/16?u=fbanning
-    esc(quote
+    return esc(quote
         Agents.@agent($new_name, $base_type, Agents.AbstractAgent, $extra_fields)
     end)
 end

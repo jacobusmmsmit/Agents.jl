@@ -2,7 +2,7 @@ to_discrete_position(pos, pathfinder) =
     floor.(Int, pos ./ pathfinder.dims .* size(pathfinder.walkmap)) .+ 1
 to_continuous_position(pos, pathfinder) =
     pos ./ size(pathfinder.walkmap) .* pathfinder.dims .-
-    pathfinder.dims ./ size(pathfinder.walkmap) ./ 2.
+    pathfinder.dims ./ size(pathfinder.walkmap) ./ 2.0
 sqr_distance(from, to, pathfinder::AStar{D,true}) where {D} =
     sum(min.(abs.(from .- to), pathfinder.dims .- abs.(from .- to)) .^ 2)
 sqr_distance(from, to, pathfinder::AStar{D,false}) where {D} =
@@ -50,7 +50,7 @@ function find_continuous_path(
     end
     # If `to` is already at the center of a grid cell, there's no need
     # to push it to the path
-    last_to_end ≈ 0. || push!(cts_path, to)
+    last_to_end ≈ 0.0 || push!(cts_path, to)
     return cts_path
 end
 
@@ -61,14 +61,14 @@ function Agents.plan_route!(
 ) where {A<:AbstractAgent,D,P,M}
     path = find_continuous_path(pathfinder, agent.pos, dest)
     isnothing(path) && return
-    pathfinder.agent_paths[agent.id] = path
+    return pathfinder.agent_paths[agent.id] = path
 end
 
 function Agents.plan_best_route!(
     agent::A,
     dests,
     pathfinder::AStar{D,P,M,Float64};
-    condition::Symbol = :shortest,
+    condition::Symbol=:shortest,
 ) where {A<:AbstractAgent,D,P,M}
     @assert condition ∈ (:shortest, :longest)
     compare = condition == :shortest ? (a, b) -> a < b : (a, b) -> a > b
@@ -102,7 +102,7 @@ function Agents.move_along_route!(
     model::ABM{<:ContinuousSpace{D},A},
     pathfinder::AStar{D},
     speed::Float64,
-    dt::Real = 1.0,
+    dt::Real=1.0,
 ) where {D,A<:AbstractAgent}
     isempty(agent.id, pathfinder) && return
     from = agent.pos
@@ -112,7 +112,7 @@ function Agents.move_along_route!(
         dir = get_direction(from, next_waypoint, model)
         dist_to_target = norm(dir)
         # edge case
-        if dist_to_target ≈ 0.
+        if dist_to_target ≈ 0.0
             from = next_waypoint
             popfirst!(pathfinder.agent_paths[agent.id])
             if isempty(agent.id, pathfinder)
@@ -146,34 +146,34 @@ function Agents.move_along_route!(
             break
         end
     end
-    move_agent!(agent, next_pos, model)
+    return move_agent!(agent, next_pos, model)
 end
 
 function random_walkable(model::ABM{<:ContinuousSpace{D}}, pathfinder::AStar{D}) where {D}
     discrete_pos = Tuple(rand(
         model.rng,
-        filter(x -> pathfinder.walkmap[x], CartesianIndices(pathfinder.walkmap))
+        filter(x -> pathfinder.walkmap[x], CartesianIndices(pathfinder.walkmap)),
     ))
-    half_cell_size = model.space.extent ./ size(pathfinder.walkmap) ./ 2.
+    half_cell_size = model.space.extent ./ size(pathfinder.walkmap) ./ 2.0
     return to_continuous_position(discrete_pos, pathfinder) .+
-        Tuple(rand(model.rng, D) .- 0.5) .* half_cell_size
+           Tuple(rand(model.rng, D) .- 0.5) .* half_cell_size
 end
 
 walkable_cells_in_radius(pos, r, pathfinder::AStar{D,false}) where {D} =
     Iterators.filter(
         x -> all(1 .<= x .<= size(pathfinder.walkmap)) &&
-            pathfinder.walkmap[x...] &&
-            sum(((x .- pos) ./ r) .^ 2) <= 1,
-        Iterators.product([(pos[i]-r[i]):(pos[i]+r[i]) for i in 1:D]...)
+                 pathfinder.walkmap[x...] &&
+                 sum(((x .- pos) ./ r) .^ 2) <= 1,
+        Iterators.product([(pos[i]-r[i]):(pos[i]+r[i]) for i in 1:D]...),
     )
 
 walkable_cells_in_radius(pos, r, pathfinder::AStar{D,true}) where {D} =
     Iterators.map(
         x -> mod1.(x, size(pathfinder.walkmap)),
-            Iterators.filter(
-                x -> pathfinder.walkmap[mod1.(x, size(pathfinder.walkmap))...] && sum(((x .- pos) ./ r) .^ 2) <= 1,
-                Iterators.product([(pos[i]-r[i]):(pos[i]+r[i]) for i in 1:D]...)
-            )
+        Iterators.filter(
+            x -> pathfinder.walkmap[mod1.(x, size(pathfinder.walkmap))...] && sum(((x .- pos) ./ r) .^ 2) <= 1,
+            Iterators.product([(pos[i]-r[i]):(pos[i]+r[i]) for i in 1:D]...),
+        ),
     )
 
 """
@@ -185,7 +185,7 @@ function random_walkable(
     pos,
     model::ABM{<:ContinuousSpace{D}},
     pathfinder::AStar{D},
-    r = 1.0,
+    r=1.0,
 ) where {D}
     discrete_r = to_discrete_position(r, pathfinder) .- 1
     discrete_pos = to_discrete_position(pos, pathfinder)
@@ -193,15 +193,15 @@ function random_walkable(
     isempty(options) && return pos
     discrete_rand = rand(
         model.rng,
-        options
+        options,
     )
-    half_cell_size = model.space.extent ./ size(pathfinder.walkmap) ./ 2.
+    half_cell_size = model.space.extent ./ size(pathfinder.walkmap) ./ 2.0
     cts_rand = to_continuous_position(discrete_rand, pathfinder) .+
-        Tuple(rand(model.rng, D) .- 0.5) .* half_cell_size
+               Tuple(rand(model.rng, D) .- 0.5) .* half_cell_size
     dist = euclidean_distance(pos, cts_rand, model)
     dist > r && (cts_rand = mod1.(
         pos .+ get_direction(pos, cts_rand, model) ./ dist .* r,
-        model.space.extent
+        model.space.extent,
     ))
     return cts_rand
 end

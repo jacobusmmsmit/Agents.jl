@@ -121,10 +121,10 @@ function from_serializable(t::SerializableABM{S,A}; kwargs...) where {S,A}
     abm = ABM(
         A,
         from_serializable(t.space; kwargs...);
-        scheduler = get(kwargs, :scheduler, Schedulers.fastest),
-        properties = from_serializable(t.properties; kwargs...),
-        rng = t.rng,
-        warn = get(kwargs, :warn, true)
+        scheduler=get(kwargs, :scheduler, Schedulers.fastest),
+        properties=from_serializable(t.properties; kwargs...),
+        rng=t.rng,
+        warn=get(kwargs, :warn, true),
     )
     abm.maxid[] = t.maxid
 
@@ -148,7 +148,7 @@ end
 
 function from_serializable(t::SerializableContinuousSpace{D,P,T}; kwargs...) where {D,P,T}
     update_vel! = get(kwargs, :update_vel!, Agents.no_vel_update)
-    ContinuousSpace(
+    return ContinuousSpace(
         from_serializable(t.grid; kwargs...),
         update_vel!,
         t.dims,
